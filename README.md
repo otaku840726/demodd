@@ -1,5 +1,5 @@
-![Unit Test](https://github.com/bhwang/demo/actions/workflows/test.yml/badge.svg)
-![Build](https://github.com/bhwang/demo/actions/workflows/build.yml/badge.svg)
+![Unit Test](https://github.com/otaku840726/demodd/actions/workflows/test.yml/badge.svg)
+![Build](https://github.com/otaku840726/demodd/actions/workflows/build.yml/badge.svg)
 
 # DemoDD - 註冊登入範例系統
 
