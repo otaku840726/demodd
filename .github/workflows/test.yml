@@ -34,6 +34,13 @@ jobs:
       attestations: write
       id-token: write
     steps:
+      - name: Setup maven
+        uses: s4u/setup-maven-action@v1.18.0
+        with:
+          java-version: '24'
+          java-distribution: 'corretto'
+          cache-enabled: true
+          
       - name: Checkout
         uses: actions/checkout@v4
         with:
@@ -41,13 +48,6 @@ jobs:
           github-server-url: ${{ secrets.REPO_SERVER　}}
           repository: scott/demodd
           token: ${{ secrets.REPO_TOKEN　}}
-        
-      - name: Setup maven
-        uses: s4u/setup-maven-action@v1.18.0
-        with:
-          java-version: '24'
-          java-distribution: 'corretto'
-          cache-enabled: true
 
       - name: DB Migrate
         run: |       
