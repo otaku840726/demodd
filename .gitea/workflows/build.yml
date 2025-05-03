@@ -1,0 +1,85 @@
+name: Build Spring Boot
+
+on:
+  workflow_dispatch:
+  
+env:
+  IMAGE_NAME: ${{ github.repository }}
+  IMAGE_TAG: latest
+  DB_USER: dev
+  DB_PASS: abc@123!
+  DB_DATABASE: demo
+  
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0.36
+        ports:
+          - 3306:3306
+        env:
+          MYSQL_DATABASE: ${{ env.DB_DATABASE }}
+          MYSQL_USER: ${{ env.DB_USER }}
+          MYSQL_PASSWORD: ${{ env.DB_PASS }}
+          MYSQL_ROOT_PASSWORD: ${{ env.DB_PASS }}
+        options: >-
+          --health-cmd "mysqladmin ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+          
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+        
+      - name: Setup maven
+        uses: s4u/setup-maven-action@v1.18.0
+        with:
+          java-version: '24'
+          java-distribution: 'corretto'
+          cache-enabled: true
+          
+      - name: Setup Enviroment
+        run: |
+          echo "GITHUB_API_URL ${{ env.GITHUB_API_URL }} "
+          echo "GITHUB_SERVER_URL ${{ env.GITHUB_SERVER_URL }} "
+
+          GITHUB_SERVER_HOST=$(echo "${{ env.GITHUB_SERVER_URL }}" | sed 's~https\?://~~')
+          echo "GITHUB_SERVER_HOST: $GITHUB_SERVER_HOST "
+          echo "GITHUB_SERVER_HOST=$GITHUB_SERVER_HOST" >> $GITHUB_ENV
+
+          MAVEN_REPO_URL=${{ env.GITHUB_SERVER_URL }}/api/packages/${{ env.GITHUB_REPOSITORY_OWNER }}/maven
+          echo "MAVEN_REPO_URL: $MAVEN_REPO_URL "
+          echo "MAVEN_REPO_URL=$MAVEN_REPO_URL" >> $GITHUB_ENV
+          
+      - name: Setup Image Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.GITHUB_SERVER_HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          
+          
+      - name: Build image
+        env:
+          DB_URL: 'jdbc:mysql://127.0.0.1:3306/${{ env.DB_DATABASE }}?serverTimezone=UTC'
+        run: |
+          mvn flyway:migrate
+          mvn jooq-codegen:generate
+          mvn spring-boot:build-image \
+              -DskipTests \
+              -Dspring-boot.build-image.imageName=${{ env.GITHUB_SERVER_HOST }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} \
+              -Denv.DB_USER=$DB_USER \
+              -Denv.DB_PASS=$DB_PASS \
+              -Denv.DB_URL=$DB_URL
+           
+      - name: Push image to registry
+        run: docker push ${{ env.GITHUB_SERVER_HOST }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}

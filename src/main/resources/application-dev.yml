@@ -1,0 +1,52 @@
+debug: true
+
+app:
+  url: https://demodd.ohya.day
+  mail-from: demodd1@ohya.day
+  mail-name: DemoDD
+
+spring:
+  application:
+    name: demodd
+  messages:
+    basename: messages
+    encoding: UTF-8
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/demo?serverTimezone=UTC}
+    username: ${DB_USER:dev}
+    password: ${DB_PASS:abc@123!}
+  jooq:
+    sql-dialect: MYSQL
+  flyway:
+    enabled: true
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: YOUR_GOOGLE_CLIENT_ID
+            client-secret: YOUR_GOOGLE_CLIENT_SECRET
+            scope: [openid, profile, email]
+        provider:
+          google:
+            issuer-uri: https://accounts.google.com
+  data:
+    redis:
+      repositories:
+        enabled: false
+      host: localhost
+      port: 6379
+      database: 0
+      password:
+  mail:
+    host: in-v3.mailjet.com
+    port: 587
+    username: f7ae37609155662ce08dae2d9bc5a074
+    password: 5e0716b16f42ebbb8df117949db08950
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+    default-encoding: utf-8

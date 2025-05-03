@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <title>DemoDD 前端介面</title>
+  <style>
+    body { font-family: sans-serif; padding: 2em; background: #f9f9f9; }
+    input, button { padding: 0.5em; margin: 0.5em 0; width: 100%; }
+    button[disabled] { opacity: 0.6; cursor: not-allowed; }
+    .box { background: white; padding: 1em; border-radius: 8px; max-width: 400px; margin: auto; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    code { background: #eee; padding: 0.2em 0.4em; }
+    #message { margin-top: 1em; padding: 0.5em; border-radius: 4px; }
+    #message.success { background-color: #d4edda; color: #155724; }
+    #message.error { background-color: #f8d7da; color: #721c24; }
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #ccc;
+      border-top-color: #333;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      vertical-align: middle;
+      margin-left: 5px;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    pre#profile-output {
+      white-space: pre-wrap;
+      background: #f0f0f0;
+      padding: 1em;
+      border-radius: 6px;
+      margin-top: 1em;
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+<div class="box">
+  <h2>註冊</h2>
+  <form id="register-form">
+    <input type="email" id="register-email" placeholder="Email" required />
+    <input type="password" id="register-password" placeholder="Password" required />
+    <button type="submit" id="register-btn">註冊</button>
+  </form>
+
+  <h2>登入</h2>
+  <form id="login-form">
+    <input type="email" id="login-email" placeholder="Email" required />
+    <input type="password" id="login-password" placeholder="Password" required />
+    <button type="submit" id="login-btn">登入</button>
+  </form>
+
+  <h2>驗證 OTP</h2>
+  <form id="verify-form">
+    <input type="text" id="otp" placeholder="輸入 OTP" required />
+    <button type="submit" id="verify-btn">驗證</button>
+  </form>
+
+  <h2>使用者資料</h2>
+  <button id="fetch-profile">查詢 /profile</button>
+  <pre id="profile-output">尚未查詢</pre>
+
+  <div id="message"></div>
+
+  <h3>狀態</h3>
+  <p>Token: <code id="jwt-token">N/A</code></p>
+  <p>狀態: <span id="token-status">未登入</span></p>
+</div>
+
+<script>
+  const API_BASE = "";
+  const tokenEl = document.getElementById("jwt-token");
+  const statusEl = document.getElementById("token-status");
+  const messageEl = document.getElementById("message");
+  const profileOutput = document.getElementById("profile-output");
+
+  function updateStatus(token) {
+    tokenEl.textContent = token || "N/A";
+    if (!token) {
+      statusEl.textContent = "未登入";
+      return;
+    }
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      if (payload.type === "ACCESS") {
+        statusEl.textContent = "✅ 正式 Token（已登入）";
+      } else if (payload.type === "TEMP") {
+        statusEl.textContent = "⏳ 暫時 Token（需驗證）";
+      } else {
+        statusEl.textContent = `❓ 未知 Token 類型 (${payload.type})`;
+      }
+    } catch {
+      statusEl.textContent = "⚠️ 無法解析 Token";
+    }
+  }
+
+  function showMessage(type, text) {
+    messageEl.className = type;
+    messageEl.textContent = text;
+  }
+
+  function addSpinner(btn) {
+    btn.dataset.originalText = btn.innerHTML;
+    btn.innerHTML += ' <span class="spinner"></span>';
+    btn.disabled = true;
+  }
+
+  function removeSpinner(btn) {
+    btn.innerHTML = btn.dataset.originalText;
+    btn.disabled = false;
+  }
+
+  async function handleAuth(url, emailId, passwordId, buttonId) {
+    const email = document.getElementById(emailId).value;
+    const password = document.getElementById(passwordId).value;
+    const button = document.getElementById(buttonId);
+    addSpinner(button);
+
+    try {
+      const res = await fetch(`${API_BASE}${url}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        const errorMsg = data.error?.message || "操作失敗";
+        showMessage("error", errorMsg);
+        return;
+      }
+
+      const token = data.data?.token || data.data || "";
+      localStorage.setItem("jwt", token);
+      updateStatus(token);
+      showMessage("success", url === "/register" ? "註冊成功，請繼續驗證 OTP" : "登入成功，請繼續驗證 OTP");
+    } catch (err) {
+      showMessage("error", "網路錯誤，請稍後再試");
+    } finally {
+      removeSpinner(button);
+    }
+  }
+
+  document.getElementById("register-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    handleAuth("/register", "register-email", "register-password", "register-btn");
+  });
+
+  document.getElementById("login-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    handleAuth("/login", "login-email", "login-password", "login-btn");
+  });
+
+  document.getElementById("verify-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const otp = document.getElementById("otp").value;
+    const jwt = localStorage.getItem("jwt");
+    const button = document.getElementById("verify-btn");
+    addSpinner(button);
+
+    try {
+      const res = await fetch(`${API_BASE}/verify`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${jwt}`
+        },
+        body: JSON.stringify({ token: otp, type: "EMAIL" })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        const errorMsg = data.error?.message || "OTP 驗證失敗";
+        showMessage("error", errorMsg);
+        return;
+      }
+
+      const newToken = data.data?.token || data.data || "";
+      localStorage.setItem("jwt", newToken);
+      updateStatus(newToken);
+      showMessage("success", "OTP 驗證成功，您已登入完成");
+    } catch (err) {
+      showMessage("error", "網路錯誤，請稍後再試");
+    } finally {
+      removeSpinner(button);
+    }
+  });
+
+  document.getElementById("fetch-profile").addEventListener("click", async () => {
+    const jwt = localStorage.getItem("jwt");
+    profileOutput.textContent = "查詢中...";
+    try {
+      const res = await fetch(`${API_BASE}/user/profile`, {
+        headers: {
+          "Authorization": `Bearer ${jwt}`
+        }
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        const errorMsg = data.error?.message || "查詢失敗";
+        profileOutput.textContent = errorMsg;
+        return;
+      }
+      profileOutput.textContent = JSON.stringify(data.data, null, 2);
+    } catch (err) {
+      profileOutput.textContent = "查詢失敗，請稍後再試";
+    }
+  });
+
+  updateStatus(localStorage.getItem("jwt"));
+</script>
+</body>
+</html>

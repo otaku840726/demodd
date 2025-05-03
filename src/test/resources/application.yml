@@ -1,0 +1,51 @@
+debug: true
+app:
+  url: https://demodd.ohya.day
+  mail-from: demodd1@ohya.day
+  mail-name: DemoDD
+  access-expiration: 30m
+  temp-expiration: 5m
+  register-expiration: 30m
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  info:
+    git:
+      mode: full
+
+spring:
+  application:
+    name: demodd
+  messages:
+    basename: messages
+    encoding: UTF-8
+  jooq:
+    sql-dialect: MYSQL
+  flyway:
+    enabled: true
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: YOUR_GOOGLE_CLIENT_ID
+            client-secret: YOUR_GOOGLE_CLIENT_SECRET
+            scope: [openid, profile, email]
+        provider:
+          google:
+            issuer-uri: https://accounts.google.com
+  mail:
+    host: in-v3.mailjet.com
+    port: 587
+    username: f7ae37609155662ce08dae2d9bc5a074
+    password: 5e0716b16f42ebbb8df117949db08950
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+    default-encoding: utf-8

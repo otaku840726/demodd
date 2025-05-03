@@ -1,0 +1,23 @@
+app:
+  access-expiration: 30m
+  temp-expiration: 5m
+  register-expiration: 30m
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  info:
+    git:
+      mode: full
+
+spring:
+  application:
+    name: demodd
+  messages:
+    basename: messages
+    encoding: UTF-8
+  config:
+    activate:
+      on-profile:

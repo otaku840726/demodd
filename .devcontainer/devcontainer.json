@@ -1,0 +1,29 @@
+{
+  "image": "mcr.microsoft.com/devcontainers/universal:2",
+  "postStartCommand": "/workspaces/demodd/.devcontainer/scripts/startup.sh",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/devcontainers/features/java:1": {
+      "version": "24",
+      "installMaven": true,
+      "mavenVersion": "3.9.9"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "vscjava.vscode-java-pack",
+        "vmware.vscode-boot-dev-pack",
+        "eamodio.gitlens",
+        "ms-azuretools.vscode-containers",
+        "MS-CEINTL.vscode-language-pack-zh-hant",
+        "GitHub.copilot"
+      ]
+    }
+  },
+  "containerEnv": {
+    "DB_URL": "jdbc:mysql://localhost:3306/demo?serverTimezone=UTC",
+    "DB_USER": "dev",
+    "DB_PASS": "abc@123!"
+  }
+}
