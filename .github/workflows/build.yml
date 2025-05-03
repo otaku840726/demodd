@@ -1,4 +1,4 @@
-name: Build Spring Boot
+name: Build Docker Image
 
 on:
   workflow_dispatch:
