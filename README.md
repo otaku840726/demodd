@@ -5,6 +5,8 @@
 
 DemoDD 是一個基於 Spring Boot 架構實作的範例專案，支援帳號註冊與登入的多階段驗證流程，並整合 JWT、Redis、郵件驗證等功能，適合作為具有高安全性需求的後端應用模板。
 
+# [🌐Demo UI](https://demodd.ohya.day/) [🌐Swagger](https://demodd.ohya.day/swagger-ui/index.html)
+
 <p align="center">
   <img src="https://img.otaku840726.workers.dev/logo/logo7.png" width="50%"/>
 </p>
